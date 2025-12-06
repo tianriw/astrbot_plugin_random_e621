@@ -36,9 +36,9 @@ class RandE621(Star):
         post,msg = await self.get_random_post()
         chain = [
             Comp.At(qq=event.get_sender_id()),
-            Comp.Plain("获取成功！" if msg == "" else msg),
-            Comp.Plain(f"图片ID：{post['id']}"),
-            Comp.Plain(f"获取时是否被 {self.user_name} 大人标记：{'是' if post['is_favorited'] else '否'}"),
+            Comp.Plain("\u200b获取成功！\u200b" if msg == "" else msg),
+            Comp.Plain(f"\u200b图片ID：{post['id']}\u200b"),
+            Comp.Plain(f"\u200b获取时是否被 {self.user_name} 大人标记：{'是' if post['is_favorited'] else '否'}\u200b"),
             Comp.Image.fromURL(post["file"]["url"])
         ]
         yield event.chain_result(chain)
@@ -48,11 +48,12 @@ class RandE621(Star):
             return (random.choice(self.cached_post),"当前处于冷却中...")
 
         random_page = random.randint(0,30)
+        random_item = random.randint(0,9)
 
-        res = httpx.get(f"https://e621.net/posts.json?limit=1&tags={self.tags}", headers={"Authorization": self.auth_header, "User-Agent": self.user_agent})
+        res = httpx.get(f"https://e621.net/posts.json?limit=10&page={random_page}&tags={self.tags}", headers={"Authorization": self.auth_header, "User-Agent": self.user_agent})
         self.last_req_time = time.time()
         self.cached_post.append(res.json()["posts"][0])
-        return (res.json()["posts"][0],"")
+        return (res.json()["posts"][random_item],"")
 
     async def terminate(self):
         """可选择实现异步的插件销毁方法，当插件被卸载/停用时会调用。"""
