@@ -1,3 +1,4 @@
+
 import base64
 import random
 import time
@@ -12,7 +13,6 @@ from astrbot.api import AstrBotConfig
 
 @register("Random Post In E621", "Tianri", "随机获取 E621 上的图片", "1.0.0")
 class RandE621(Star):
-    cached_post = [] # 就是要共享。
 
     def __init__(self, context: Context,config: AstrBotConfig):
         super().__init__(context)
@@ -22,6 +22,8 @@ class RandE621(Star):
         self.user_name = self.config["user_name"]
         self.tags = self.config["tags"]
         self.last_req_time = 0
+
+        self.cached_post = []
 
         self.auth_header = base64.b64encode(f"{self.user_name}:{self.api_key}".encode("utf-8"))
         self.auth_header = "Basic " + self.auth_header.decode("utf-8")
