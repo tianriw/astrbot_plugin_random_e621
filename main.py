@@ -36,9 +36,9 @@ class RandE621(Star):
         post,msg = await self.get_random_post()
         chain = [
             Comp.At(qq=event.get_sender_id()),
-            Comp.Plain("\u200b获取成功！\u200b" if msg == "" else msg),
-            Comp.Plain(f"\u200b图片ID：{post['id']}\u200b"),
-            Comp.Plain(f"\u200b获取时是否被 {self.user_name} 大人标记：{'是' if post['is_favorited'] else '否'}\u200b"),
+            Comp.Plain("\u200b获取成功！\n\u200b" if msg == "" else msg),
+            Comp.Plain(f"\u200b图片ID：{post['id']}\n\u200b"),
+            Comp.Plain(f"\u200b获取时是否被 {self.user_name} 大人标记：{'是' if post['is_favorited'] else '否'}\n\u200b"),
             Comp.Image.fromURL(post["file"]["url"])
         ]
         yield event.chain_result(chain)
