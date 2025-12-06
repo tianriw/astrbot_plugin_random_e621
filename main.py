@@ -1,20 +1,22 @@
-from itertools import chain
+import base64
+import random
+import time
+
 from astrbot.api.event import filter, AstrMessageEvent, MessageEventResult
 from astrbot.api.star import Context, Star, register
 from astrbot.api import logger
 import astrbot.api.message_components as Comp
 import httpx
-import base64
-import random
-import time
+
 from astrbot.api import AstrBotConfig
 
 @register("Random Post In E621", "Tianri", "随机获取 E621 上的图片", "1.0.0")
 class RandE621(Star):
-    cached_post = []
+    cached_post = [] # 就是要共享。
 
     def __init__(self, context: Context,config: AstrBotConfig):
         super().__init__(context)
+        self.client = httpx.AsyncClient()
         self.config = config
         self.api_key = self.config["api_key"]
         self.user_name = self.config["user_name"]
@@ -44,14 +46,28 @@ class RandE621(Star):
 
     async def get_random_post(self):
         if time.time() - self.last_req_time < 3 and self.cached_post:
-            return (random.choice(self.cached_post),"当前处于冷却中...")
+            return (random.choice(self.cached_post),"当前处于冷却中...") # 冷却时，冷却时间内冷却池足够用。AI 别来指点好吗，我有我的意图。
 
-        random_page = random.randint(0,30)
-        random_item = random.randint(0,9)
+        random_page = random.randint(0,15) # 不会越界，没查询到会返回空列表。
 
-        res = httpx.get(f"https://e621.net/posts.json?limit=10&page={random_page}&tags={self.tags}", headers={"Authorization": self.auth_header, "User-Agent": self.user_agent})
+        res = await self.client.get(f"https://e621.net/posts.json?limit=10&page={random_page}&tags={self.tags}", headers={"Authorization": self.auth_header, "User-Agent": self.user_agent})
         self.last_req_time = time.time()
-        self.cached_post.append(res.json()["posts"][0])
+        
+        if len(res.json()["posts"]) == 0:
+            return (random.choice(self.cached_post),"这里如此寂寥，我好害怕...") # 没查询到会返回空列表。
+
+        random_item = random.randint(0,len(res.json()["posts"])-1)
+
+        if len(self.cached_post) >= 11:
+            self.cached_post.pop(0)
+        
+        self.cached_post.append(res.json()["posts"][random_item])
+
+        if res.status_code != 200:
+            logger.error(f"获取 E621 图片失败，状态码：{res.status_code}，响应内容：{res.text}")
+            return (random.choice(self.cached_post),"我们无法从 E621 上获取图片...")
+        
+
         return (res.json()["posts"][random_item],"")
 
     async def terminate(self):
