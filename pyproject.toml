@@ -1,0 +1,14 @@
+[project]
+name = "astrbot-plugin-random-e621"
+version = "0.1.0"
+description = "随机获取 E621 上的图片"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "astrbot",
+    "httpx>=0.28.1",
+]
+
+[[tool.uv.index]]
+url = "https://pypi.tuna.tsinghua.edu.cn/simple/"
+default = true

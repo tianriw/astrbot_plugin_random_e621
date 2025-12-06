@@ -1,0 +1,16 @@
+{
+    "api_key": {
+        "type": "string",
+        "description": "e621 API密钥"
+    },
+    "user_name": {
+        "type": "string",
+        "description": "你的e621用户名"
+    },
+    "tags": {
+        "type": "text",
+        "description": "标签",
+        "hint": "支持所有e621标签（同时也包括不支持 40 个以上标签的限制），如果你愿意，你甚至可以使用 E标记 的标签，或者我全都要的不填写！",
+        "default": "~rating:safe ~rating:questionable -female -tan_body -tan_fur -belly -huge_belly -penis -huge_checks -big_checks -fat_face -3_toes -big_butt -butt -the_amazing_digital_circus -hollow_knight_(franchise) -sex -sex_toy_in_ass -painting_(artwork) -pokemon_(species) -hug -ball_fondling -balls -king_candy -kissing -ambiguous_gender -cum -humanoid -overweight -oliver_(cloudy_hyena) -bondage -breast_growth -areola -gynomorph -sonic_the_hedgehog_(series) -bulge -hazbin_hotel -nude -erection"
+    }
+}
