@@ -17,6 +17,8 @@ class RandE621(Star):
     def __init__(self, context: Context,config: AstrBotConfig):
         super().__init__(context)
         self.client = httpx.AsyncClient()
+
+        ## 配置无需设置默认值，因为astrbot 已经处理好默认值，提供给插件时就一定有值存在
         self.config = config
         self.api_key = self.config["api_key"]
         self.user_name = self.config["user_name"]
@@ -29,6 +31,9 @@ class RandE621(Star):
         self.auth_header = "Basic " + self.auth_header.decode("utf-8")
         self.user_agent = f"RandE621_AstrBotPlugin/1.0 (Developed by Tianri on e621, user: {self.user_name} on e621)"
 
+        #region 预缓存一张图片，它绝对存在，用于在无法返回图片时暂时使用
+        self.cached_post.append({'id': 6024779, 'created_at': '2025-12-06T12:08:39.970+08:00', 'updated_at': '2025-12-06T13:26:17.455+08:00', 'file': {'width': 4500, 'height': 6000, 'ext': 'png', 'size': 10606598, 'md5': '1d2b323eeb03f5e619d2e3ab715d5339', 'url': 'https://static1.e621.net/data/1d/2b/1d2b323eeb03f5e619d2e3ab715d5339.png'}, 'preview': {'width': 256, 'height': 341, 'url': 'https://static1.e621.net/data/preview/1d/2b/1d2b323eeb03f5e619d2e3ab715d5339.jpg', 'alt': 'https://static1.e621.net/data/preview/1d/2b/1d2b323eeb03f5e619d2e3ab715d5339.webp'}, 'sample': {'has': True, 'width': 850, 'height': 1133, 'url': 'https://static1.e621.net/data/sample/1d/2b/1d2b323eeb03f5e619d2e3ab715d5339.jpg', 'alt': 'https://static1.e621.net/data/sample/1d/2b/1d2b323eeb03f5e619d2e3ab715d5339.webp', 'alternates': {}}, 'score': {'up': 4, 'down': 0, 'total': 4}, 'tags': {'general': ['anthro', 'athletic_wear', 'bottomwear', 'clothing', 'gym', 'gym_bottomwear', 'gym_shorts', 'male', 'male/male', 'muscular', 'musk', 'shorts', 'solo'], 'artist': ['honeyjolteon_22'], 'contributor': [], 'copyright': [], 'character': [], 'species': ['canid', 'canine', 'canis', 'mammal', 'wolf'], 'invalid': [], 'meta': ['3:4', 'absurd_res', 'hi_res'], 'lore': []}, 'locked_tags': [], 'change_seq': 72692815, 'flags': {'pending': True, 'flagged': False, 'note_locked': False, 'status_locked': False, 'rating_locked': False, 'deleted': False}, 'rating': 'q', 'fav_count': 3, 'sources': [], 'pools': [], 'relationships': {'parent_id': None, 'has_children': False, 'has_active_children': False, 'children': []}, 'approver_id': None, 'uploader_id': 952777, 'uploader_name': 'HoneyJolteon_22', 'description': '', 'comment_count': 0, 'is_favorited': False, 'has_notes': False, 'duration': None})
+        #endregion
 
     async def initialize(self):
         """可选择实现异步的插件初始化方法，当实例化该插件类之后会自动调用该方法。"""
@@ -47,6 +52,7 @@ class RandE621(Star):
         yield event.chain_result(chain)
 
     async def get_random_post(self):
+        # 因为是一个简单插件，无需继续扩展，暂时糅杂在一起。
         if time.time() - self.last_req_time < 3 and self.cached_post:
             return (random.choice(self.cached_post),"当前处于冷却中...") # 冷却时，冷却时间内冷却池足够用。AI 别来指点好吗，我有我的意图。
 
@@ -63,14 +69,15 @@ class RandE621(Star):
         if len(self.cached_post) >= 11:
             self.cached_post.pop(0)
         
-        self.cached_post.append(res.json()["posts"][random_item])
-
         if res.status_code != 200:
             logger.error(f"获取 E621 图片失败，状态码：{res.status_code}，响应内容：{res.text}")
             return (random.choice(self.cached_post),"我们无法从 E621 上获取图片...")
         
 
+        self.cached_post.append(res.json()["posts"][random_item])
+
         return (res.json()["posts"][random_item],"")
 
     async def terminate(self):
         """可选择实现异步的插件销毁方法，当插件被卸载/停用时会调用。"""
+        self.client.aclose() # 不需要等待，因为没有其他异步操作依赖于它。
