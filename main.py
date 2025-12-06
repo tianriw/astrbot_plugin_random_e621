@@ -13,6 +13,8 @@ from astrbot.api import AstrBotConfig
 
 @register("Random Post In E621", "Tianri", "随机获取 E621 上的图片", "1.0.0")
 class RandE621(Star):
+    MAX_PAGE_SEARCH = 15
+    CACHE_SIZE = 11
 
     def __init__(self, context: Context,config: AstrBotConfig):
         super().__init__(context)
@@ -26,9 +28,7 @@ class RandE621(Star):
         self.last_req_time = 0
 
         self.cached_post = []
-
-        self.auth_header = base64.b64encode(f"{self.user_name}:{self.api_key}".encode("utf-8"))
-        self.auth_header = "Basic " + self.auth_header.decode("utf-8")
+        self.client.auth = httpx.BasicAuth(self.user_name, self.api_key)
         self.user_agent = f"RandE621_AstrBotPlugin/1.0 (Developed by Tianri on e621, user: {self.user_name} on e621)"
 
         #region 预缓存一张图片，它绝对存在，用于在无法返回图片时暂时使用
@@ -56,28 +56,30 @@ class RandE621(Star):
         if time.time() - self.last_req_time < 3 and self.cached_post:
             return (random.choice(self.cached_post),"当前处于冷却中...") # 冷却时，冷却时间内冷却池足够用。AI 别来指点好吗，我有我的意图。
 
-        random_page = random.randint(0,15) # 不会越界，没查询到会返回空列表。
+        random_page = random.randint(0, self.MAX_PAGE_SEARCH) # 不会越界，没查询到会返回空列表。
 
         res = await self.client.get(f"https://e621.net/posts.json?limit=10&page={random_page}&tags={self.tags}", headers={"Authorization": self.auth_header, "User-Agent": self.user_agent})
         self.last_req_time = time.time()
         
-        if len(res.json()["posts"]) == 0:
-            return (random.choice(self.cached_post),"这里如此寂寥，我好害怕...") # 没查询到会返回空列表。
-
-        random_item = random.randint(0,len(res.json()["posts"])-1)
-
-        if len(self.cached_post) >= 11:
-            self.cached_post.pop(0)
-        
-        if res.status_code != 200:
+        if not res.is_success:
             logger.error(f"获取 E621 图片失败，状态码：{res.status_code}，响应内容：{res.text}")
             return (random.choice(self.cached_post),"我们无法从 E621 上获取图片...")
         
 
-        self.cached_post.append(res.json()["posts"][random_item])
+        data = res.json()
+        
+        if len(data["posts"]) == 0:
+            return (random.choice(self.cached_post),"这里如此寂寥，我好害怕...") # 没查询到会返回空列表。
 
-        return (res.json()["posts"][random_item],"")
+        random_item = random.randint(0,len(data["posts"])-1)
+
+        if len(self.cached_post) >= self.CACHE_SIZE:
+            self.cached_post.pop(0)
+
+        self.cached_post.append(data["posts"][random_item])
+
+        return (data["posts"][random_item],"")
 
     async def terminate(self):
         """可选择实现异步的插件销毁方法，当插件被卸载/停用时会调用。"""
-        self.client.aclose() # 不需要等待，因为没有其他异步操作依赖于它。
+        await self.client.aclose()
