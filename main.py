@@ -1,15 +1,17 @@
 
-import base64
 import random
 import time
 
-from astrbot.api.event import filter, AstrMessageEvent, MessageEventResult
+from astrbot.api.event import filter, AstrMessageEvent
 from astrbot.api.star import Context, Star, register
 from astrbot.api import logger
 import astrbot.api.message_components as Comp
 import httpx
 
 from astrbot.api import AstrBotConfig
+
+# 这个虽然很长，但是一定是正确的！不必考虑可读性，因为本来就没想让人读！只有一个 POST
+A_POST = {'id': 6024779, 'created_at': '2025-12-06T12:08:39.970+08:00', 'updated_at': '2025-12-06T13:26:17.455+08:00', 'file': {'width': 4500, 'height': 6000, 'ext': 'png', 'size': 10606598, 'md5': '1d2b323eeb03f5e619d2e3ab715d5339', 'url': 'https://static1.e621.net/data/1d/2b/1d2b323eeb03f5e619d2e3ab715d5339.png'}, 'preview': {'width': 256, 'height': 341, 'url': 'https://static1.e621.net/data/preview/1d/2b/1d2b323eeb03f5e619d2e3ab715d5339.jpg', 'alt': 'https://static1.e621.net/data/preview/1d/2b/1d2b323eeb03f5e619d2e3ab715d5339.webp'}, 'sample': {'has': True, 'width': 850, 'height': 1133, 'url': 'https://static1.e621.net/data/sample/1d/2b/1d2b323eeb03f5e619d2e3ab715d5339.jpg', 'alt': 'https://static1.e621.net/data/sample/1d/2b/1d2b323eeb03f5e619d2e3ab715d5339.webp', 'alternates': {}}, 'score': {'up': 4, 'down': 0, 'total': 4}, 'tags': {'general': ['anthro', 'athletic_wear', 'bottomwear', 'clothing', 'gym', 'gym_bottomwear', 'gym_shorts', 'male', 'male/male', 'muscular', 'musk', 'shorts', 'solo'], 'artist': ['honeyjolteon_22'], 'contributor': [], 'copyright': [], 'character': [], 'species': ['canid', 'canine', 'canis', 'mammal', 'wolf'], 'invalid': [], 'meta': ['3:4', 'absurd_res', 'hi_res'], 'lore': []}, 'locked_tags': [], 'change_seq': 72692815, 'flags': {'pending': True, 'flagged': False, 'note_locked': False, 'status_locked': False, 'rating_locked': False, 'deleted': False}, 'rating': 'q', 'fav_count': 3, 'sources': [], 'pools': [], 'relationships': {'parent_id': None, 'has_children': False, 'has_active_children': False, 'children': []}, 'approver_id': None, 'uploader_id': 952777, 'uploader_name': 'HoneyJolteon_22', 'description': '', 'comment_count': 0, 'is_favorited': False, 'has_notes': False, 'duration': None}
 
 @register("Random Post In E621", "Tianri", "随机获取 E621 上的图片", "1.0.0")
 class RandE621(Star):
@@ -32,7 +34,7 @@ class RandE621(Star):
         self.user_agent = f"RandE621_AstrBotPlugin/1.0 (Developed by Tianri on e621, user: {self.user_name} on e621)"
 
         #region 预缓存一张图片，它绝对存在，用于在无法返回图片时暂时使用
-        self.cached_post.append({'id': 6024779, 'created_at': '2025-12-06T12:08:39.970+08:00', 'updated_at': '2025-12-06T13:26:17.455+08:00', 'file': {'width': 4500, 'height': 6000, 'ext': 'png', 'size': 10606598, 'md5': '1d2b323eeb03f5e619d2e3ab715d5339', 'url': 'https://static1.e621.net/data/1d/2b/1d2b323eeb03f5e619d2e3ab715d5339.png'}, 'preview': {'width': 256, 'height': 341, 'url': 'https://static1.e621.net/data/preview/1d/2b/1d2b323eeb03f5e619d2e3ab715d5339.jpg', 'alt': 'https://static1.e621.net/data/preview/1d/2b/1d2b323eeb03f5e619d2e3ab715d5339.webp'}, 'sample': {'has': True, 'width': 850, 'height': 1133, 'url': 'https://static1.e621.net/data/sample/1d/2b/1d2b323eeb03f5e619d2e3ab715d5339.jpg', 'alt': 'https://static1.e621.net/data/sample/1d/2b/1d2b323eeb03f5e619d2e3ab715d5339.webp', 'alternates': {}}, 'score': {'up': 4, 'down': 0, 'total': 4}, 'tags': {'general': ['anthro', 'athletic_wear', 'bottomwear', 'clothing', 'gym', 'gym_bottomwear', 'gym_shorts', 'male', 'male/male', 'muscular', 'musk', 'shorts', 'solo'], 'artist': ['honeyjolteon_22'], 'contributor': [], 'copyright': [], 'character': [], 'species': ['canid', 'canine', 'canis', 'mammal', 'wolf'], 'invalid': [], 'meta': ['3:4', 'absurd_res', 'hi_res'], 'lore': []}, 'locked_tags': [], 'change_seq': 72692815, 'flags': {'pending': True, 'flagged': False, 'note_locked': False, 'status_locked': False, 'rating_locked': False, 'deleted': False}, 'rating': 'q', 'fav_count': 3, 'sources': [], 'pools': [], 'relationships': {'parent_id': None, 'has_children': False, 'has_active_children': False, 'children': []}, 'approver_id': None, 'uploader_id': 952777, 'uploader_name': 'HoneyJolteon_22', 'description': '', 'comment_count': 0, 'is_favorited': False, 'has_notes': False, 'duration': None})
+        self.cached_post.append(A_POST)
         #endregion
 
     async def initialize(self):
@@ -58,7 +60,7 @@ class RandE621(Star):
 
         random_page = random.randint(0, self.MAX_PAGE_SEARCH) # 不会越界，没查询到会返回空列表。
 
-        res = await self.client.get(f"https://e621.net/posts.json?limit=10&page={random_page}&tags={self.tags}", headers={"Authorization": self.auth_header, "User-Agent": self.user_agent})
+        res = await self.client.get(f"https://e621.net/posts.json?limit=10&page={random_page}&tags={self.tags}", headers={"User-Agent": self.user_agent})
         self.last_req_time = time.time()
         
         if not res.is_success:
