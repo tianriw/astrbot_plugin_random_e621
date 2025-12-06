@@ -1,5 +1,6 @@
 name: astrbot_plugin_random_post_in_e621
-display_name: 随机E621
-desc: 如名。
+display_name: 随机E621图片
+desc: 获取随机 E621 上的 furry 图片。\n（在最初版本中甚至有可能获得米老鼠图片！即将被法务制裁！！！）
 version: v1.0.0
 repo: https://github.com/tianriw/astrbot_plugin_random_e621
+author: Tianri
