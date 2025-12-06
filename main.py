@@ -39,7 +39,7 @@ class RandE621(Star):
             Comp.Plain("获取成功！" if msg == "" else msg),
             Comp.Plain(f"图片ID：{post['id']}"),
             Comp.Plain(f"获取时是否被 {self.user_name} 大人标记：{'是' if post['is_favorited'] else '否'}"),
-            Comp.Plain(post)
+            Comp.Plain(str(post))
         ]
         yield event.chain_result(chain)
 
